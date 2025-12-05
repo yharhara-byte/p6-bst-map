@@ -362,4 +362,13 @@ TEST(test_chain_of_copies) {
     ASSERT_TRUE(t3.check_sorting_invariant());
 }
 
+TEST(test_min_max_on_empty_tree) {
+    BinarySearchTree<int> t;
+    auto min_it = t.min_element();
+    auto max_it = t.max_element();
+    ASSERT_TRUE(min_it == t.end());
+    ASSERT_TRUE(max_it == t.end());
+}
+
+
 TEST_MAIN()

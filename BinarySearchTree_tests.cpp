@@ -101,7 +101,6 @@ TEST(test_check_sorting_invariant_break) {
     BinarySearchTree<int> t;
     t.insert(1);
     t.insert(0);
-
     *t.begin() = 2;
     ASSERT_FALSE(t.check_sorting_invariant());
 }
@@ -125,6 +124,84 @@ TEST(test_copy_constructor_and_assignment) {
     t3 = t2;
     ASSERT_EQUAL(t3.size(), 3u);
     ASSERT_TRUE(t3.check_sorting_invariant());
+}
+
+TEST(test_iterator_full_traversal) {
+    BinarySearchTree<int> t;
+    t.insert(4);
+    t.insert(2);
+    t.insert(6);
+    t.insert(1);
+    t.insert(3);
+    t.insert(5);
+    t.insert(7);
+
+    std::stringstream ss;
+    for (auto it = t.begin(); it != t.end(); ++it) {
+        ss << *it << " ";
+    }
+    ASSERT_EQUAL(ss.str(), "1 2 3 4 5 6 7 ");
+}
+
+TEST(test_unbalanced_height_and_min_greater) {
+    BinarySearchTree<int> t;
+    t.insert(1);
+    t.insert(2);
+    t.insert(3);
+    t.insert(4);
+    t.insert(5);
+
+    ASSERT_EQUAL(t.size(), 5u);
+    ASSERT_EQUAL(t.height(), 5u);
+
+    auto min_it = t.min_element();
+    auto max_it = t.max_element();
+    ASSERT_TRUE(min_it != t.end());
+    ASSERT_TRUE(max_it != t.end());
+    ASSERT_EQUAL(*min_it, 1);
+    ASSERT_EQUAL(*max_it, 5);
+
+    auto it = t.min_greater_than(0);
+    ASSERT_TRUE(it != t.end());
+    ASSERT_EQUAL(*it, 1);
+
+    it = t.min_greater_than(3);
+    ASSERT_TRUE(it != t.end());
+    ASSERT_EQUAL(*it, 4);
+
+    it = t.min_greater_than(5);
+    ASSERT_TRUE(it == t.end());
+}
+
+TEST(test_deep_sorting_invariant_violation) {
+    BinarySearchTree<int> t;
+    t.insert(10);
+    t.insert(5);
+    t.insert(15);
+    t.insert(3);
+    t.insert(7);
+    t.insert(12);
+    t.insert(18);
+
+    auto it = t.find(3);
+    ASSERT_TRUE(it != t.end());
+    *it = 20;
+    ASSERT_FALSE(t.check_sorting_invariant());
+}
+
+TEST(test_self_assignment_and_empty_copy) {
+    BinarySearchTree<int> t;
+    t.insert(1);
+    t.insert(2);
+    t = t;
+    ASSERT_TRUE(t.check_sorting_invariant());
+    ASSERT_EQUAL(t.size(), 2u);
+
+    BinarySearchTree<int> e;
+    BinarySearchTree<int> copy(e);
+    ASSERT_TRUE(copy.empty());
+    ASSERT_EQUAL(copy.size(), 0u);
+    ASSERT_TRUE(copy.check_sorting_invariant());
 }
 
 TEST_MAIN()

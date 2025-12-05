@@ -2,6 +2,10 @@
 #include "unit_test_framework.hpp"
 #include <sstream>
 
+BinarySearchTree<int> copy_by_value(BinarySearchTree<int> t) {
+    return t;
+}
+
 TEST(test_empty_tree) {
     BinarySearchTree<int> t;
     ASSERT_TRUE(t.empty());
@@ -202,6 +206,160 @@ TEST(test_self_assignment_and_empty_copy) {
     ASSERT_TRUE(copy.empty());
     ASSERT_EQUAL(copy.size(), 0u);
     ASSERT_TRUE(copy.check_sorting_invariant());
+}
+
+TEST(test_copy_large_balanced_tree) {
+    BinarySearchTree<int> t;
+    int vals[] = {8, 4, 12, 2, 6, 10, 14, 1, 3, 5, 7, 9, 11, 13, 15};
+    for (int v : vals) {
+        t.insert(v);
+    }
+
+    BinarySearchTree<int> c(t);
+    ASSERT_EQUAL(c.size(), 15u);
+    ASSERT_EQUAL(c.height(), 4u);
+    ASSERT_TRUE(c.check_sorting_invariant());
+
+    std::stringstream inorder_t;
+    std::stringstream inorder_c;
+    t.traverse_inorder(inorder_t);
+    c.traverse_inorder(inorder_c);
+    ASSERT_EQUAL(inorder_c.str(), inorder_t.str());
+    ASSERT_EQUAL(inorder_c.str(), "1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 ");
+}
+
+TEST(test_copy_large_unbalanced_tree) {
+    BinarySearchTree<int> t;
+    for (int i = 1; i <= 8; ++i) {
+        t.insert(i);
+    }
+
+    BinarySearchTree<int> c(t);
+    ASSERT_EQUAL(c.size(), 8u);
+    ASSERT_EQUAL(c.height(), 8u);
+    ASSERT_TRUE(c.check_sorting_invariant());
+
+    std::stringstream inorder_t;
+    std::stringstream inorder_c;
+    t.traverse_inorder(inorder_t);
+    c.traverse_inorder(inorder_c);
+    ASSERT_EQUAL(inorder_c.str(), inorder_t.str());
+    ASSERT_EQUAL(inorder_c.str(), "1 2 3 4 5 6 7 8 ");
+}
+
+TEST(test_copy_mutate_original_right_subtree) {
+    BinarySearchTree<int> t1;
+    t1.insert(4);
+    t1.insert(2);
+    t1.insert(6);
+    t1.insert(1);
+    t1.insert(3);
+    t1.insert(5);
+    t1.insert(7);
+
+    BinarySearchTree<int> t2(t1);
+
+    auto it_orig = t1.find(6);
+    ASSERT_TRUE(it_orig != t1.end());
+    *it_orig = 100;
+
+    ASSERT_TRUE(t1.find(100) != t1.end());
+    ASSERT_TRUE(t2.find(6) != t2.end());
+    ASSERT_TRUE(t2.find(100) == t2.end());
+}
+
+TEST(test_copy_via_pass_by_value) {
+    BinarySearchTree<int> t;
+    t.insert(10);
+    t.insert(5);
+    t.insert(15);
+    t.insert(3);
+    t.insert(7);
+    t.insert(12);
+    t.insert(18);
+
+    BinarySearchTree<int> c = copy_by_value(t);
+
+    ASSERT_EQUAL(c.size(), 7u);
+    ASSERT_TRUE(c.check_sorting_invariant());
+
+    std::stringstream inorder_t;
+    std::stringstream inorder_c;
+    t.traverse_inorder(inorder_t);
+    c.traverse_inorder(inorder_c);
+    ASSERT_EQUAL(inorder_c.str(), inorder_t.str());
+    ASSERT_EQUAL(inorder_c.str(), "3 5 7 10 12 15 18 ");
+}
+
+TEST(test_copy_then_insert_in_copy_only) {
+    BinarySearchTree<int> t1;
+    t1.insert(2);
+    t1.insert(1);
+    t1.insert(3);
+
+    BinarySearchTree<int> t2(t1);
+
+    t2.insert(0);
+
+    ASSERT_EQUAL(t1.size(), 3u);
+    ASSERT_EQUAL(t2.size(), 4u);
+
+    ASSERT_TRUE(t1.find(0) == t1.end());
+    ASSERT_TRUE(t2.find(0) != t2.end());
+
+    ASSERT_TRUE(t1.check_sorting_invariant());
+    ASSERT_TRUE(t2.check_sorting_invariant());
+}
+
+TEST(test_copy_then_insert_in_original_only) {
+    BinarySearchTree<int> t1;
+    t1.insert(2);
+    t1.insert(1);
+    t1.insert(3);
+
+    BinarySearchTree<int> t2(t1);
+
+    t1.insert(0);
+    t1.insert(4);
+
+    ASSERT_EQUAL(t1.size(), 5u);
+    ASSERT_EQUAL(t2.size(), 3u);
+
+    ASSERT_TRUE(t1.find(0) != t1.end());
+    ASSERT_TRUE(t1.find(4) != t1.end());
+    ASSERT_TRUE(t2.find(0) == t2.end());
+    ASSERT_TRUE(t2.find(4) == t2.end());
+
+    ASSERT_TRUE(t1.check_sorting_invariant());
+    ASSERT_TRUE(t2.check_sorting_invariant());
+}
+
+TEST(test_chain_of_copies) {
+    BinarySearchTree<int> t1;
+    int vals[] = {5, 2, 8, 1, 3, 7, 9};
+    for (int v : vals) {
+        t1.insert(v);
+    }
+
+    BinarySearchTree<int> t2(t1);
+    BinarySearchTree<int> t3(t2);
+
+    ASSERT_EQUAL(t1.size(), 7u);
+    ASSERT_EQUAL(t2.size(), 7u);
+    ASSERT_EQUAL(t3.size(), 7u);
+
+    std::stringstream in1, in2, in3;
+    t1.traverse_inorder(in1);
+    t2.traverse_inorder(in2);
+    t3.traverse_inorder(in3);
+
+    ASSERT_EQUAL(in1.str(), "1 2 3 5 7 8 9 ");
+    ASSERT_EQUAL(in2.str(), in1.str());
+    ASSERT_EQUAL(in3.str(), in1.str());
+
+    ASSERT_TRUE(t1.check_sorting_invariant());
+    ASSERT_TRUE(t2.check_sorting_invariant());
+    ASSERT_TRUE(t3.check_sorting_invariant());
 }
 
 TEST_MAIN()

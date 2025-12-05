@@ -31,8 +31,14 @@ private:
   using Pair_type = std::pair<Key_type, Value_type>;
 
   // A custom comparator
-  class PairComp {
-  };
+    class PairComp {
+    public:
+      bool operator()(const Pair_type &a, const Pair_type &b) const {
+        Key_compare comp;
+        return comp(a.first, b.first);  
+      }
+    };
+
 
 public:
 
@@ -111,7 +117,7 @@ public:
   Iterator end() const;
 
 private:
-  // Add a BinarySearchTree private member HERE.
+  BinarySearchTree<Pair_type, PairComp> bst;
 };
 
 // You may implement member functions below using an "out-of-line" definition
@@ -124,5 +130,63 @@ private:
 //    typename Map<K, V, C>::Iterator Map<K, V, C>::begin() const {
 //      // YOUR IMPLEMENTATION GOES HERE
 //    }
+
+template <typename K, typename V, typename C>
+bool Map<K, V, C>::empty() const {
+  return bst.empty();
+}
+
+template <typename K, typename V, typename C>
+size_t Map<K, V, C>::size() const {
+  return bst.size();
+}
+
+template <typename K, typename V, typename C>
+typename Map<K, V, C>::Iterator
+Map<K, V, C>::find(const K& k) const {
+  using Pair_type = typename Map<K, V, C>::Pair_type;
+  Pair_type probe(k, V());        
+  return bst.find(probe);        
+}
+
+template <typename K, typename V, typename C>
+V& Map<K, V, C>::operator[](const K& k) {
+  using Pair_type = typename Map<K, V, C>::Pair_type;
+  Pair_type probe(k, V());       
+
+  auto it = bst.find(probe);
+
+  if (it == bst.end()) {
+    typename Map<K, V, C>::Iterator new_it = bst.insert(probe);
+    return (*new_it).second;
+  } else {
+    return (*it).second;
+  }
+}
+
+template <typename K, typename V, typename C>
+std::pair<typename Map<K, V, C>::Iterator, bool>
+Map<K, V, C>::insert(const typename Map<K, V, C>::Pair_type &val) {
+  auto it = bst.find(val);
+  if (it != bst.end()) {
+    return std::make_pair(it, false);
+  }
+
+  typename Map<K, V, C>::Iterator new_it = bst.insert(val);
+  return std::make_pair(new_it, true);
+}
+
+template <typename K, typename V, typename C>
+typename Map<K, V, C>::Iterator
+Map<K, V, C>::begin() const {
+  return bst.begin();
+}
+
+template <typename K, typename V, typename C>
+typename Map<K, V, C>::Iterator
+Map<K, V, C>::end() const {
+  return bst.end();
+}
+
 
 #endif // DO NOT REMOVE!!!
